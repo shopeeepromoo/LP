@@ -1,0 +1,16 @@
+{
+  "short_name": "ShopeeAdmin",
+  "name": "Shopee Seller Broadcast Admin",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Shopee.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/LP/admin.html",
+  "background_color": "#ee4d2d",
+  "display": "standalone",
+  "scope": "/shopeebridge/",
+  "theme_color": "#ee4d2d"
+}
