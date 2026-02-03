@@ -130,5 +130,9 @@
 
     updateCount();
 </script>
+    // Biar admin.html bisa diinstal di HP
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('firebase-messaging-sw.js');
+}
 </body>
 </html>
