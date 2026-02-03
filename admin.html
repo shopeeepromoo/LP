@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopee Admin | Master Broadcast</title>
+    
+    <link rel="manifest" href="admin-manifest.json">
+    <meta name="theme-color" content="#ee4d2d">
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/f/fe/Shopee.svg">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --shopee: #ee4d2d; }
@@ -68,7 +73,7 @@
 
 <script>
     const _supa = supabase.createClient("https://zscupvelldysboqatuee.supabase.co", "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR");
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxI_59vNKFCEZQwCSiLhUBeM2wzrE83t2Rvy0BpdH5GogAo9mBD__jJ4cJfKzUrD5lV/exec"; // Masukkan URL hasil New Deployment GAS Anda
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxI_59vNKFCEZQwCSiLhUBeM2wzrE83t2Rvy0BpdH5GogAo9mBD__jJ4cJfKzUrD5lV/exec";
 
     async function updateCount() {
         const gen = document.getElementById('f-gender').value;
@@ -103,7 +108,6 @@
         btn.disabled = true;
         btn.innerText = "⏳ SEDANG MENGIRIM...";
 
-        // Link Bridge Otomatis
         const finalLink = "https://shopeeepromoo.github.io/LP/?url=" + encodeURIComponent(document.getElementById('link').value);
 
         let sukses = 0;
@@ -129,10 +133,12 @@
     }
 
     updateCount();
+
+    // 2. PINDAHKAN SKRIP INI KE DALAM TAG <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('firebase-messaging-sw.js')
+        .then(() => console.log("Service Worker Registered"));
+    }
 </script>
-    // Biar admin.html bisa diinstal di HP
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('firebase-messaging-sw.js');
-}
 </body>
 </html>
