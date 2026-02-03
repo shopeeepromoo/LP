@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopee Admin | Master Broadcast</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --shopee: #ee4d2d; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: var(--shopee); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 25px; }
+        .section-title { font-size: 14px; font-weight: bold; color: #555; margin-top: 20px; background: #f8f9fa; padding: 8px; border-radius: 4px; }
+        label { display: block; font-size: 12px; margin: 15px 0 5px; color: #666; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .row { display: flex; gap: 15px; }
+        .stat-box { background: #fff5f3; border: 1px solid #ffdbd3; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+        .stat-box b { color: var(--shopee); font-size: 24px; }
+        button { background: var(--shopee); color: white; border: none; padding: 18px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 30px; }
+        button:hover { background: #d73211; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Shopee Seller Broadcast</h2>
+
+    <div class="stat-box">
+        Target Terfilter: <b id="count">0</b> User
+    </div>
+
+    <div class="section-title">1. PILIH SEGMENTASI</div>
+    <div class="row">
+        <div style="flex:1">
+            <label>Gender</label>
+            <select id="f-gender" onchange="updateCount()">
+                <option value="all">Semua</option>
+                <option value="Pria">Pria</option>
+                <option value="Wanita">Wanita</option>
+            </select>
+        </div>
+        <div style="flex:1">
+            <label>Usia</label>
+            <select id="f-age" onchange="updateCount()">
+                <option value="all">Semua</option>
+                <option value="Remaja">Remaja</option>
+                <option value="Dewasa">Dewasa</option>
+                <option value="Lansia">Lansia</option>
+            </select>
+        </div>
+    </div>
+    <label>Filter Lokasi (Kabupaten/Kota)</label>
+    <input type="text" id="f-city" placeholder="Ketik nama kota..." onkeyup="updateCount()">
+
+    <div class="section-title">2. ISI KONTEN PROMO</div>
+    <label>Judul Notifikasi</label>
+    <input type="text" id="title" placeholder="Contoh: Diskon Selang Air 90%">
+    <label>Isi Pesan</label>
+    <textarea id="body" rows="3" placeholder="Tulis kalimat promo yang menggoda..."></textarea>
+    <label>Link Gambar Produk</label>
+    <input type="text" id="image" placeholder="https://link-gambar.jpg">
+    <label>Link Affiliate Shopee</label>
+    <input type="text" id="link" placeholder="https://shope.ee/xxxx">
+
+    <button onclick="kirim()">KIRIM BROADCAST SEKARANG</button>
+    <div id="status" style="text-align:center; margin-top:15px; font-size:13px; color:#888;"></div>
+</div>
+
+<script>
+    const _supa = supabase.createClient("https://zscupvelldysboqatuee.supabase.co", "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR");
+    const GAS_URL = "URL_GAS_BARU_ANDA"; // Masukkan URL hasil New Deployment GAS Anda
+
+    async function updateCount() {
+        const gen = document.getElementById('f-gender').value;
+        const age = document.getElementById('f-age').value;
+        const city = document.getElementById('f-city').value;
+
+        let query = _supa.from('subscriber').select('token', { count: 'exact' });
+        if(gen !== 'all') query = query.eq('gender', gen);
+        if(age !== 'all') query = query.eq('age', age);
+        if(city) query = query.ilike('city', `%${city}%`);
+
+        const { count } = await query;
+        document.getElementById('count').innerText = count || 0;
+    }
+
+    async function kirim() {
+        const gen = document.getElementById('f-gender').value;
+        const age = document.getElementById('f-age').value;
+        const city = document.getElementById('f-city').value;
+        const btn = document.querySelector('button');
+
+        let query = _supa.from('subscriber').select('token');
+        if(gen !== 'all') query = query.eq('gender', gen);
+        if(age !== 'all') query = query.eq('age', age);
+        if(city) query = query.ilike('city', `%${city}%`);
+
+        const { data } = await query;
+        if(!data || data.length === 0) return alert("Tidak ada target!");
+
+        if(!confirm(`Kirim notifikasi ke ${data.length} user?`)) return;
+
+        btn.disabled = true;
+        btn.innerText = "⏳ SEDANG MENGIRIM...";
+
+        // Link Bridge Otomatis
+        const finalLink = "https://shopeeepromoo.github.io/LP/?url=" + encodeURIComponent(document.getElementById('link').value);
+
+        let sukses = 0;
+        for(const user of data) {
+            const payload = {
+                token: user.token,
+                title: document.getElementById('title').value,
+                body: document.getElementById('body').value,
+                image: document.getElementById('image').value,
+                link: finalLink
+            };
+
+            try {
+                await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+                sukses++;
+                document.getElementById('status').innerText = `Terkirim: ${sukses} / ${data.length}`;
+            } catch(e) {}
+        }
+
+        alert("Broadcast Selesai!");
+        btn.disabled = false;
+        btn.innerText = "KIRIM BROADCAST SEKARANG";
+    }
+
+    updateCount();
+</script>
+</body>
+</html>
