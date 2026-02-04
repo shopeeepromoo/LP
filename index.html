@@ -61,17 +61,18 @@
 </div>
 
 <script>
-/* 1. AMBIL PARAMETER URL DINAMIS */
+/* 1. PARAMETER URL */
 const urlParams = new URLSearchParams(window.location.search);
 const dest = urlParams.get('url') || "https://shopee.co.id";
-document.getElementById('btnGoShopee').onclick = function() { location.href = dest; };
+document.getElementById('btnGoShopee').onclick = () => location.href = dest;
 
-/* 2. LOGIKA LOCALSTORAGE (CEK DI AWAL) */
+/* 2. LOCAL STORAGE */
 if (localStorage.getItem('shopee_done')) {
-    document.getElementById('formSection').classList.add('hidden');
-    document.getElementById('redirectSection').classList.remove('hidden');
+    formSection.classList.add('hidden');
+    redirectSection.classList.remove('hidden');
 }
 
+/* 3. FIREBASE INIT */
 firebase.initializeApp({
     apiKey: "AIzaSyD_zJ9VxNeNZCBwaXpzgHbbfmw3Ymj5QTA",
     authDomain: "shopee-promo.firebaseapp.com",
@@ -84,11 +85,16 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 let swRegistration = null;
 
+/* 4. REGISTER SERVICE WORKER + BIND KE FCM (INI KUNCI UTAMA) */
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/LP/firebase-messaging-sw.js')
-        .then(reg => { swRegistration = reg; });
+        .then(reg => {
+            swRegistration = reg;
+            messaging.useServiceWorker(swRegistration); // 🔴 WAJIB
+        });
 }
 
+/* 5. SUPABASE */
 const mySupabase = supabase.createClient(
     "https://zscupvelldysboqatuee.supabase.co",
     "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
@@ -98,25 +104,26 @@ let userData = { gender:'', age:'', city:'', token:'' };
 
 function nextStep(step) {
     if (step === 'age') {
-        userData.gender = document.getElementById('gender').value;
-        document.getElementById('stepGender').classList.add('hidden');
-        document.getElementById('stepAge').classList.remove('hidden');
+        userData.gender = gender.value;
+        stepGender.classList.add('hidden');
+        stepAge.classList.remove('hidden');
     } else {
-        userData.age = document.getElementById('age').value;
-        document.getElementById('stepAge').classList.add('hidden');
-        document.getElementById('stepCity').classList.remove('hidden');
+        userData.age = age.value;
+        stepAge.classList.add('hidden');
+        stepCity.classList.remove('hidden');
     }
 }
 
 function showSection(id) {
-    document.getElementById('loadingSection').classList.add('hidden');
-    document.getElementById('formSection').classList.add('hidden');
-    document.getElementById('redirectSection').classList.add('hidden');
+    loadingSection.classList.add('hidden');
+    formSection.classList.add('hidden');
+    redirectSection.classList.add('hidden');
     document.getElementById(id).classList.remove('hidden');
 }
 
+/* 6. VALIDASI & SIMPAN */
 async function processValidation() {
-    userData.city = document.getElementById('cityInput').value.trim();
+    userData.city = cityInput.value.trim();
     if (userData.city.length < 3) return alert("Masukkan nama kota");
 
     showSection('loadingSection');
@@ -131,13 +138,13 @@ async function processValidation() {
             if (token) userData.token = token;
         }
 
-        // Pakai insert seperti kode lama Anda yang terbukti jalan
-        await mySupabase.from('subscriber').insert([userData]);
-        
-        // Simpan ke memori HP agar tidak tanya lagi
-        localStorage.setItem('shopee_done', 'true');
+        const { error } = await mySupabase.from('subscriber').insert([userData]);
+        if (error) console.error('SUPABASE ERROR:', error);
 
-    } catch (e) { console.error("ERR:", e); }
+        localStorage.setItem('shopee_done', 'true');
+    } catch (e) {
+        console.error("ERR:", e);
+    }
 
     setTimeout(() => showSection('redirectSection'), 1000);
 }
