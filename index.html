@@ -85,7 +85,7 @@ const messaging = firebase.messaging();
 let swRegistration = null;
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/shopeebridge/firebase-messaging-sw.js')
+    navigator.serviceWorker.register('/LP/firebase-messaging-sw.js')
         .then(reg => { swRegistration = reg; });
 }
 
