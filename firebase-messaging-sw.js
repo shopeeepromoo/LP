@@ -40,3 +40,6 @@ self.addEventListener('notificationclick', function(event) {
     clients.openWindow(targetUrl)
   );
 });
+self.addEventListener('push', function (event) {
+  console.log('🔥 PUSH EVENT MASUK', event);
+});
