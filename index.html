@@ -90,7 +90,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/LP/firebase-messaging-sw.js')
         .then(reg => {
             swRegistration = reg;
-            messaging.useServiceWorker(swRegistration); // 🔴 WAJIB
+            
         });
 }
 
