@@ -1,45 +1,32 @@
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+self.addEventListener('push', function (event) {
+  console.log('🔥 PUSH EVENT MASUK');
 
-firebase.initializeApp({
-    apiKey: "AIzaSyD_zJ9VxNeNZCBwaXpzgHbbfmw3Ymj5QTA",
-    authDomain: "shopee-promo.firebaseapp.com",
-    projectId: "shopee-promo",
-    storageBucket: "shopee-promo.firebasestorage.app",
-    messagingSenderId: "526441713326",
-    appId: "1:526441713326:web:4ba5bb996f44e98bc5673f"
-});
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      console.error('Push data bukan JSON');
+    }
+  }
 
-const messaging = firebase.messaging();
-
-// Menangani notifikasi saat browser di latar belakang
-messaging.onBackgroundMessage((payload) => {
-  console.log('Notifikasi masuk di background:', payload);
-
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
+  const title = data.title || 'Promo Shopee';
+  const options = {
+    body: data.body || '',
     icon: 'https://upload.wikimedia.org/wikipedia/commons/f/fe/Shopee.svg',
-    image: payload.notification.image || '', // Gambar produk jika ada
     data: {
-      url: payload.data.url // Link affiliate
+      url: data.link || 'https://shopee.co.id'
     }
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
-
-// Logika ketika notifikasi diklik
-self.addEventListener('notificationclick', function(event) {
-  event.notification.close();
-  
-  // Ambil URL dari payload atau default ke Shopee
-  const targetUrl = event.notification.data.url || 'https://shopee.co.id';
-
   event.waitUntil(
-    clients.openWindow(targetUrl)
+    self.registration.showNotification(title, options)
   );
 });
-self.addEventListener('push', function (event) {
-  console.log('🔥 PUSH EVENT MASUK', event);
+
+self.addEventListener('notificationclick', function (event) {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
+  );
 });
